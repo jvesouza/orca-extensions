@@ -61,6 +61,12 @@ the same way before Orca will load the new version.
 Criticism, improvements, suggestions, and beers are all very welcome — feel free to open an
 issue.
 
+## Disclaimer
+
+These are personal, unofficial extensions — not affiliated with or endorsed by the GNOME Orca
+project. Provided as-is, with no warranty. User extensions can have broad access to your system
+and accessibility data, so please review the code before installing.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
