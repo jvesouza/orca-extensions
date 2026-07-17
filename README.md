@@ -24,12 +24,19 @@ Default keybindings:
 
 An NVDA-style "synth settings ring": select a speech setting (rate, pitch, volume, voice,
 synthesizer, voice set, punctuation level, capitalization style, indentation) and adjust it,
-without opening any menu. Individual settings can be enabled or disabled from the extension's
-own preferences page.
+without opening any menu.
 
 Default keybindings:
 - `Orca+Right` / `Orca+Left` — select the next/previous ring setting
 - `Orca+Up` / `Orca+Down` — increase/decrease the selected setting
+
+Notes:
+- Each setting in the ring can be individually enabled or disabled from the extension's own
+  preferences page, in case you're not interested in adjusting some of them (open it from the
+  User Extensions page in Orca's Preferences window).
+- Values adjusted through the ring are **not saved** across an Orca restart — this matches
+  Orca's own built-in rate/pitch/volume keys, which also only change the running session, not
+  your saved Preferences.
 
 ## Installation
 
