@@ -1,5 +1,7 @@
 # orca-extensions
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Personal collection of [Orca](https://gitlab.gnome.org/GNOME/orca) (the GNOME screen reader)
 user extensions.
 
