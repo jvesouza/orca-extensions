@@ -54,6 +54,11 @@ Notes:
 If you edit an already-approved extension, its hash changes and you'll need to re-approve it
 the same way before Orca will load the new version.
 
+## Feedback
+
+Criticism, improvements, suggestions, and beers are all very welcome — feel free to open an
+issue.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
