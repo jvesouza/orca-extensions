@@ -31,6 +31,7 @@ class SynthSettingsRing(Extension):
         "selected one, similar to NVDA's synth settings ring. Individual settings can be "
         "enabled or disabled from this extension's preferences."
     )
+    WEBSITE = "https://github.com/jvesouza/orca-extensions"
 
     _STOPS: tuple[_RingStop, ...] = (
         _RingStop(
