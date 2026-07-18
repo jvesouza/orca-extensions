@@ -15,7 +15,7 @@ from orca.extension import Extension  # noqa: E402
 class ShowVersion(Extension):
     """Announces Orca's version and revision, optionally copying it to the clipboard."""
 
-    GROUP_LABEL = "jve-extension"
+    GROUP_LABEL = "Show Version"
     DESCRIPTION = (
         "Announces Orca's version and revision, optionally copying it to the clipboard."
     )
