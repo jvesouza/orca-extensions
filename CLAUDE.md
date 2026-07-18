@@ -87,6 +87,14 @@ public command methods that call `self.controller.present_message_internal(...)`
 results, and `_get_keybinding()` helpers that build `keybindings.KeyBinding` instances from a key
 plus modifier flags.
 
+Orca's user-extensions docs list "stable convenience functions for creating non-preferences
+user-extension UI" as still pending — there is no supported helper for showing an extension's
+own window. Extensions aren't prevented from building one directly, though: `ShowVersion`'s
+`show_version_dialog()` calls `gi.repository.Gtk` directly (`gi.require_version("Gtk", "3.0")`,
+matching the GTK version Orca itself uses in-process) to pop up a `Gtk.MessageDialog`. Since Orca
+already runs a GTK main loop in-process, this works without any extra threading, but the extension
+owns that dialog's behavior and accessibility — Orca provides no support for it.
+
 ## Style conventions already in use
 
 - Extension classes are documented with a one-line class docstring; command methods have a

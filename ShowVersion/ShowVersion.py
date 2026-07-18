@@ -7,17 +7,21 @@ import gi
 gi.require_version("Atspi", "2.0")
 from gi.repository import Atspi  # noqa: E402
 
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk  # noqa: E402
+
 from orca import keybindings  # noqa: E402
 from orca.command import Command, KeyboardCommand  # noqa: E402
 from orca.extension import Extension  # noqa: E402
 
 
 class ShowVersion(Extension):
-    """Announces Orca's version and revision, optionally copying it to the clipboard."""
+    """Announces, copies, or displays in a dialog Orca's current version."""
 
     GROUP_LABEL = "Show Version"
     DESCRIPTION = (
-        "Announces Orca's version and revision, optionally copying it to the clipboard."
+        "Announces Orca's version and revision, optionally copying it to the clipboard or "
+        "displaying it in a dialog."
     )
     WEBSITE = "https://github.com/jvesouza/orca-extensions"
 
@@ -25,6 +29,7 @@ class ShowVersion(Extension):
         return [
             self._create_show_version_command(),
             self._create_copy_version_to_clipboard_command(),
+            self._create_show_version_dialog_command(),
         ]
 
     def show_version(self) -> bool:
@@ -37,6 +42,19 @@ class ShowVersion(Extension):
         """Announces the current version of Orca and copies it to the clipboard."""
 
         self._display_version_to_user(copy_to_clipboard=True)
+        return True
+
+    def show_version_dialog(self) -> bool:
+        """Displays the current version of Orca in a dialog."""
+
+        dialog = Gtk.MessageDialog(
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.OK,
+            text=self._generate_version_message(),
+        )
+        dialog.set_title(self.GROUP_LABEL)
+        dialog.run()
+        dialog.destroy()
         return True
 
     def _display_version_to_user(self, copy_to_clipboard: bool = False) -> None:
@@ -79,6 +97,14 @@ class ShowVersion(Extension):
             "Announces the current version of Orca and copies it to the clipboard",
             desktop_keybinding=self._get_keybinding("v", ctrl=True, shift=True),
             laptop_keybinding=self._get_keybinding("v", ctrl=True, shift=True),
+        )
+
+    def _create_show_version_dialog_command(self) -> KeyboardCommand:
+        return KeyboardCommand(
+            "show_version_dialog",
+            self.show_version_dialog,
+            self.GROUP_LABEL,
+            "Displays the current version of Orca in a dialog",
         )
 
     def _get_keybinding(

@@ -16,11 +16,14 @@ for the full extension API, security model, and approval process.
 ### ShowVersion
 
 Announces Orca's version, revision, AT-SPI2 version, and session type on demand, and can copy
-that information to the clipboard.
+that information to the clipboard or show it in a dialog.
 
 Default keybindings:
 - `Orca+Ctrl+V` — announce the current version
 - `Orca+Ctrl+Shift+V` — announce the current version and copy it to the clipboard
+
+The "Displays the current version of Orca in a dialog" command has no default keybinding; assign
+one from Orca's Preferences window if you want one.
 
 ### SynthSettingsRing
 
