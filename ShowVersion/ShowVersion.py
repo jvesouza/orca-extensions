@@ -2,9 +2,14 @@
 
 import os
 
-from orca import keybindings, orca_platform
-from orca.command import Command, KeyboardCommand
-from orca.extension import Extension
+import gi
+
+gi.require_version("Atspi", "2.0")
+from gi.repository import Atspi  # noqa: E402
+
+from orca import keybindings, orca_platform  # noqa: E402
+from orca.command import Command, KeyboardCommand  # noqa: E402
+from orca.extension import Extension  # noqa: E402
 
 
 class ShowVersion(Extension):
@@ -42,6 +47,11 @@ class ShowVersion(Extension):
         parts = [f"Orca version: {orca_platform.version}"]
         if orca_platform.revision:
             parts.append(f"Revision: {orca_platform.revision}")
+
+        atspi_version = Atspi.get_version()  # pylint: disable=no-value-for-parameter
+        parts.append(
+            f"AT-SPI2 version: {atspi_version[0]}.{atspi_version[1]}.{atspi_version[2]}"
+        )
 
         session_type = os.environ.get("XDG_SESSION_TYPE") or ""
         session_desktop = os.environ.get("XDG_SESSION_DESKTOP") or ""

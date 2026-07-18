@@ -15,8 +15,8 @@ for the full extension API, security model, and approval process.
 
 ### ShowVersion
 
-Announces Orca's version, revision, and session type on demand, and can copy that
-information to the clipboard.
+Announces Orca's version, revision, AT-SPI2 version, and session type on demand, and can copy
+that information to the clipboard.
 
 Default keybindings:
 - `Orca+Ctrl+V` — announce the current version
