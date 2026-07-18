@@ -41,9 +41,13 @@ Notes:
   User Extensions page in Orca's Preferences window).
 - By default, values adjusted through the ring are **not saved** across an Orca restart — this
   matches Orca's own built-in rate/pitch/volume keys, which also only change the running
-  session, not your saved Preferences. Enable "Remember ring values across Orca restarts" in the
-  extension's preferences to have the ring save each value it changes and restore it the next
-  time Orca loads the extension.
+  session, not your saved Preferences.
+- Enabling "Remember ring values across Orca restarts" in the extension's preferences does
+  **not** change that, and does **not** write to Orca's own saved speech/voice settings. Instead,
+  the extension keeps its own separate record of each value it changes. The next time Orca loads
+  the extension, it reapplies those remembered values to the running session — the same as if
+  you'd adjusted them again by hand — but this still isn't reflected in Orca's Preferences
+  window, and turning the option back off does not undo values already reapplied this way.
 
 ## Installation
 
