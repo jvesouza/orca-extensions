@@ -7,7 +7,7 @@ import gi
 gi.require_version("Atspi", "2.0")
 from gi.repository import Atspi  # noqa: E402
 
-from orca import keybindings, orca_platform  # noqa: E402
+from orca import keybindings  # noqa: E402
 from orca.command import Command, KeyboardCommand  # noqa: E402
 from orca.extension import Extension  # noqa: E402
 
@@ -46,9 +46,7 @@ class ShowVersion(Extension):
             self.controller.set_clipboard_text_internal(msg)
 
     def _generate_version_message(self) -> str:
-        parts = [f"Orca version: {orca_platform.version}"]
-        if orca_platform.revision:
-            parts.append(f"Revision: {orca_platform.revision}")
+        parts = [f"Orca version: {self.controller.get_version_internal()}"]
 
         atspi_version = Atspi.get_version()  # pylint: disable=no-value-for-parameter
         parts.append(
