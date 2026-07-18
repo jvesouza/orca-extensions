@@ -16,7 +16,9 @@ class ShowVersion(Extension):
     """Announces Orca's version and revision, optionally copying it to the clipboard."""
 
     GROUP_LABEL = "jve-extension"
-    DESCRIPTION = "Announces Orca's version and revision, optionally copying it to the clipboard."
+    DESCRIPTION = (
+        "Announces Orca's version and revision, optionally copying it to the clipboard."
+    )
     WEBSITE = "https://github.com/jvesouza/orca-extensions"
 
     def _get_commands(self) -> list[Command]:
