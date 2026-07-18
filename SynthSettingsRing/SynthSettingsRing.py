@@ -33,6 +33,8 @@ class SynthSettingsRing(Extension):
     )
     WEBSITE = "https://github.com/jvesouza/orca-extensions"
 
+    _PERSIST_KEY = "persist-values"
+
     _STOPS: tuple[_RingStop, ...] = (
         _RingStop(
             "rate",
@@ -116,11 +118,17 @@ class SynthSettingsRing(Extension):
         # No stop is selected until the user explicitly chooses one with next/previous,
         # so increase/decrease never act on a stop the user didn't pick.
         self._current_key: str | None = None
+        self._restore_persisted_values()
 
     def get_preferences(self) -> list[ExtensionPreference]:
         return [
-            ExtensionPreference.boolean(f"enable-{stop.key}", stop.label, True)
-            for stop in self._STOPS
+            ExtensionPreference.boolean(
+                self._PERSIST_KEY, "Remember ring values across Orca restarts", False
+            ),
+            *(
+                ExtensionPreference.boolean(f"enable-{stop.key}", stop.label, True)
+                for stop in self._STOPS
+            ),
         ]
 
     def _get_commands(self) -> list[Command]:
@@ -218,6 +226,9 @@ class SynthSettingsRing(Extension):
             self.controller.execute_command_internal(stop.module, stop.cycle_command)
         else:
             self.controller.present_message_internal(f"{stop.label} cannot be moved backward.")
+            return True
+
+        self._persist_current_value(stop)
         return True
 
     def _enabled_stops(self) -> list[_RingStop]:
@@ -264,6 +275,27 @@ class SynthSettingsRing(Extension):
         new_value = available[(index + direction) % len(available)]
         self.controller.set_value_internal(stop.module, stop.property, new_value)
         self.controller.present_message_internal(f"{stop.label}: {new_value}")
+
+    def _restore_persisted_values(self) -> None:
+        if not self.settings.get(self._PERSIST_KEY, default=False):
+            return
+
+        for stop in self._STOPS:
+            value = self.settings.get(self._value_setting_key(stop), default=None)
+            if value is not None:
+                self.controller.set_value_internal(stop.module, stop.property, value)
+
+    def _persist_current_value(self, stop: _RingStop) -> None:
+        if not self.settings.get(self._PERSIST_KEY, default=False):
+            return
+
+        value = self.controller.get_value_internal(stop.module, stop.property)
+        if value is not None:
+            self.settings.set(self._value_setting_key(stop), value)
+
+    @staticmethod
+    def _value_setting_key(stop: _RingStop) -> str:
+        return f"value-{stop.key}"
 
     def _get_keybinding(self, key: str) -> keybindings.KeyBinding:
         return keybindings.KeyBinding(key, keybindings.ORCA_MODIFIER_MASK)
