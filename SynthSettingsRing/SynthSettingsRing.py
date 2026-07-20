@@ -34,6 +34,7 @@ class SynthSettingsRing(Extension):
     WEBSITE = "https://github.com/jvesouza/orca-extensions"
 
     _PERSIST_KEY = "persist-values"
+    _VALUES_KEY = "ring-values"
 
     _STOPS: tuple[_RingStop, ...] = (
         _RingStop(
@@ -280,8 +281,9 @@ class SynthSettingsRing(Extension):
         if not self.settings.get(self._PERSIST_KEY, default=False):
             return
 
+        values = self.settings.get(self._VALUES_KEY, default={})
         for stop in self._STOPS:
-            value = self.settings.get(self._value_setting_key(stop), default=None)
+            value = values.get(stop.key)
             if value is not None:
                 self.controller.set_value_internal(stop.module, stop.property, value)
 
@@ -290,12 +292,12 @@ class SynthSettingsRing(Extension):
             return
 
         value = self.controller.get_value_internal(stop.module, stop.property)
-        if value is not None:
-            self.settings.set(self._value_setting_key(stop), value)
+        if value is None:
+            return
 
-    @staticmethod
-    def _value_setting_key(stop: _RingStop) -> str:
-        return f"value-{stop.key}"
+        values = self.settings.get(self._VALUES_KEY, default={})
+        values[stop.key] = value
+        self.settings.set(self._VALUES_KEY, values)
 
     def _get_keybinding(self, key: str) -> keybindings.KeyBinding:
         return keybindings.KeyBinding(key, keybindings.ORCA_MODIFIER_MASK)
