@@ -120,6 +120,8 @@ class SynthSettingsRing(Extension):
         # so increase/decrease never act on a stop the user didn't pick.
         self._current_key: str | None = None
         self._values_restored = False
+        self._list_selection: dict[str, str] = {}
+        self._available_cache: dict[str, list[str]] = {}
 
     def on_speech_output(self, output: SpeechOutput) -> SpeechOutputResult | None:
         """Restores persisted ring values the first time Orca is about to speak."""
@@ -267,17 +269,25 @@ class SynthSettingsRing(Extension):
         return None
 
     def _announce_stop(self, stop: _RingStop) -> None:
-        value = self.controller.get_value_internal(stop.module, stop.property)
+        if stop.kind == "list" and stop.key in self._list_selection:
+            value: object = self._list_selection[stop.key]
+        else:
+            value = self.controller.get_value_internal(stop.module, stop.property)
         self.controller.present_message_internal(f"{stop.label}: {value}")
 
     def _cycle_list_stop(self, stop: _RingStop, direction: int) -> None:
-        raw_available = self.controller.get_value_internal(stop.module, stop.available_property)
-        if not raw_available:
+        available = self._available_options(stop)
+        if not available:
             self.controller.present_message_internal(f"No available options for {stop.label}.")
             return
-        available = cast("list[str]", raw_available)
 
-        current = cast("str", self.controller.get_value_internal(stop.module, stop.property))
+        # Orca's own backend can overwrite the "current value" it reports for this property
+        # as a side effect of unrelated speech (e.g. our own confirmation message below, which
+        # is spoken in a different voice type). Track our last selection ourselves instead of
+        # re-querying Orca, so cycling always advances regardless of what else has spoken.
+        current = self._list_selection.get(stop.key)
+        if current is None:
+            current = cast("str", self.controller.get_value_internal(stop.module, stop.property))
         try:
             index = available.index(current)
         except ValueError:
@@ -285,7 +295,19 @@ class SynthSettingsRing(Extension):
 
         new_value = available[(index + direction) % len(available)]
         self.controller.set_value_internal(stop.module, stop.property, new_value)
+        self._list_selection[stop.key] = new_value
+        if stop.key == "synthesizer":
+            # Available voices and voice sets depend on the active synthesizer.
+            self._available_cache.clear()
         self.controller.present_message_internal(f"{stop.label}: {new_value}")
+
+    def _available_options(self, stop: _RingStop) -> list[str]:
+        if stop.key not in self._available_cache:
+            raw_available = self.controller.get_value_internal(
+                stop.module, stop.available_property
+            )
+            self._available_cache[stop.key] = cast("list[str]", raw_available) if raw_available else []
+        return self._available_cache[stop.key]
 
     def _restore_persisted_values(self) -> None:
         if not self.settings.get(self._PERSIST_KEY, default=False):
@@ -294,14 +316,23 @@ class SynthSettingsRing(Extension):
         values = self.settings.get(self._VALUES_KEY, default={})
         for stop in self._STOPS:
             value = values.get(stop.key)
-            if value is not None:
-                self.controller.set_value_internal(stop.module, stop.property, value)
+            if value is None:
+                continue
+            self.controller.set_value_internal(stop.module, stop.property, value)
+            if stop.kind == "list":
+                self._list_selection[stop.key] = value
 
     def _persist_current_value(self, stop: _RingStop) -> None:
         if not self.settings.get(self._PERSIST_KEY, default=False):
             return
 
-        value = self.controller.get_value_internal(stop.module, stop.property)
+        # For "list" stops, use our own tracked selection rather than re-querying Orca: by
+        # this point our own confirmation message may already have clobbered the value Orca
+        # reports back, for the same reason _cycle_list_stop tracks it itself.
+        if stop.kind == "list":
+            value = self._list_selection.get(stop.key)
+        else:
+            value = self.controller.get_value_internal(stop.module, stop.property)
         if value is None:
             return
 
