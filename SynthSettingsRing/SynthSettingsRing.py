@@ -4,7 +4,7 @@ from typing import NamedTuple, cast
 
 from orca import keybindings
 from orca.command import Command, KeyboardCommand
-from orca.extension import Extension, ExtensionPreference
+from orca.extension import Extension, ExtensionPreference, SpeechOutput, SpeechOutputResult
 
 
 class _RingStop(NamedTuple):
@@ -119,7 +119,17 @@ class SynthSettingsRing(Extension):
         # No stop is selected until the user explicitly chooses one with next/previous,
         # so increase/decrease never act on a stop the user didn't pick.
         self._current_key: str | None = None
-        self._restore_persisted_values()
+        self._values_restored = False
+
+    def on_speech_output(self, output: SpeechOutput) -> SpeechOutputResult | None:
+        """Restores persisted ring values the first time Orca is about to speak."""
+
+        # __init__ runs before Orca's speech server exists, so restoring there can silently
+        # fail; by the time Orca is about to speak, the speech server is guaranteed to be up.
+        if not self._values_restored:
+            self._values_restored = True
+            self._restore_persisted_values()
+        return None
 
     def get_preferences(self) -> list[ExtensionPreference]:
         return [
