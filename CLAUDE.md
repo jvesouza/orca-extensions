@@ -65,7 +65,7 @@ contract is the key to reading or modifying anything in this repo:
   extension. `get_value_internal`/`set_value_internal`/`execute_command_internal` take a Orca
   module name (e.g. `"SpeechManager"`) and a property/command name; see
   `SynthSettingsRing.py`'s `_RingStop` table for real examples of the module/property/command
-  names in use (`Rate`, `CurrentVoice`, `IncreaseRate`, `CyclePunctuationLevel`, etc.).
+  names in use (`Rate`, `CurrentVoice`, `IncreaseRate`, `ToggleIndentation`, etc.).
 - **`self.settings`**: per-extension persisted settings (stored under Orca's active profile in
   dconf), accessed with `get(key, default=...)` / `set(key, value)` / `reset(key)`. Always pass an
   explicit default to `get()`. There are no registered per-key defaults — an unset key returns
