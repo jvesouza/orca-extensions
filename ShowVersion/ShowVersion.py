@@ -24,6 +24,7 @@ class ShowVersion(Extension):
         "displaying it in a dialog."
     )
     WEBSITE = "https://github.com/jvesouza/orca-extensions"
+    VERSION = "1.0.0"
 
     def _get_commands(self) -> list[Command]:
         return [

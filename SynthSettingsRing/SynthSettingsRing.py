@@ -32,6 +32,7 @@ class SynthSettingsRing(Extension):
         "enabled or disabled from this extension's preferences."
     )
     WEBSITE = "https://github.com/jvesouza/orca-extensions"
+    VERSION = "1.0.0"
 
     _PERSIST_KEY = "persist-values"
     _VALUES_KEY = "ring-values"
