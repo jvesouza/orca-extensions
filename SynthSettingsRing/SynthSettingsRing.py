@@ -18,7 +18,7 @@ class _RingStop(NamedTuple):
     increase_command: str = ""
     decrease_command: str = ""
     available_property: str = ""
-    cycle_command: str = ""
+    values: tuple[str, ...] = ()
     toggle_command: str = ""
 
 
@@ -32,7 +32,7 @@ class SynthSettingsRing(Extension):
         "enabled or disabled from this extension's preferences."
     )
     WEBSITE = "https://github.com/jvesouza/orca-extensions"
-    VERSION = "1.0.0"
+    VERSION = "1.1.0"
 
     _PERSIST_KEY = "persist-values"
     _VALUES_KEY = "ring-values"
@@ -96,14 +96,14 @@ class SynthSettingsRing(Extension):
             "Punctuation level",
             "cycle",
             property="PunctuationLevel",
-            cycle_command="CyclePunctuationLevel",
+            values=("none", "some", "most", "all"),
         ),
         _RingStop(
             "capitalization-style",
             "Capitalization style",
             "cycle",
             property="CapitalizationStyle",
-            cycle_command="CycleCapitalizationStyle",
+            values=("none", "spell", "icon"),
         ),
         _RingStop(
             "indentation",
@@ -246,17 +246,10 @@ class SynthSettingsRing(Extension):
         if stop.kind == "numeric":
             command = stop.increase_command if direction > 0 else stop.decrease_command
             self.controller.execute_command_internal(stop.module, command)
-        elif stop.kind == "list":
-            self._cycle_list_stop(stop, direction)
+        elif stop.kind in ("list", "cycle"):
+            self._cycle_stop(stop, direction)
         elif stop.kind == "toggle":
             self.controller.execute_command_internal(stop.module, stop.toggle_command)
-        elif direction > 0:
-            self.controller.execute_command_internal(stop.module, stop.cycle_command)
-        else:
-            self.controller.present_message_internal(
-                f"{stop.label} cannot be moved backward."
-            )
-            return True
 
         self._persist_current_value(stop)
         return True
@@ -288,14 +281,14 @@ class SynthSettingsRing(Extension):
         return None
 
     def _announce_stop(self, stop: _RingStop) -> None:
-        if stop.kind == "list" and stop.key in self._list_selection:
+        if stop.kind in ("list", "cycle") and stop.key in self._list_selection:
             value: object = self._list_selection[stop.key]
         else:
             value = self.controller.get_value_internal(stop.module, stop.property)
         self.controller.present_message_internal(f"{stop.label}: {value}")
 
-    def _cycle_list_stop(self, stop: _RingStop, direction: int) -> None:
-        available = self._available_options(stop)
+    def _cycle_stop(self, stop: _RingStop, direction: int) -> None:
+        available = self._available_options(stop) if stop.kind == "list" else list(stop.values)
         if not available:
             self.controller.present_message_internal(
                 f"No available options for {stop.label}."
@@ -344,17 +337,17 @@ class SynthSettingsRing(Extension):
             if value is None:
                 continue
             self.controller.set_value_internal(stop.module, stop.property, value)
-            if stop.kind == "list":
+            if stop.kind in ("list", "cycle"):
                 self._list_selection[stop.key] = value
 
     def _persist_current_value(self, stop: _RingStop) -> None:
         if not self.settings.get(self._PERSIST_KEY, default=False):
             return
 
-        # For "list" stops, use our own tracked selection rather than re-querying Orca: by
-        # this point our own confirmation message may already have clobbered the value Orca
-        # reports back, for the same reason _cycle_list_stop tracks it itself.
-        if stop.kind == "list":
+        # For "list"/"cycle" stops, use our own tracked selection rather than re-querying Orca:
+        # by this point our own confirmation message may already have clobbered the value Orca
+        # reports back, for the same reason _cycle_stop tracks it itself.
+        if stop.kind in ("list", "cycle"):
             value = self._list_selection.get(stop.key)
         else:
             value = self.controller.get_value_internal(stop.module, stop.property)
