@@ -4,7 +4,7 @@ from typing import NamedTuple, cast
 
 from orca import keybindings
 from orca.command import Command, KeyboardCommand
-from orca.extension import Extension, ExtensionPreference, SpeechOutput, SpeechOutputResult
+from orca.extension import Extension, ExtensionPreference
 
 
 class _RingStop(NamedTuple):
@@ -119,19 +119,29 @@ class SynthSettingsRing(Extension):
         # No stop is selected until the user explicitly chooses one with next/previous,
         # so increase/decrease never act on a stop the user didn't pick.
         self._current_key: str | None = None
-        self._values_restored = False
         self._list_selection: dict[str, str] = {}
         self._available_cache: dict[str, list[str]] = {}
 
-    def on_speech_output(self, output: SpeechOutput) -> SpeechOutputResult | None:
-        """Restores persisted ring values the first time Orca is about to speak."""
+    def on_ready(self) -> None:
+        """Restores persisted ring values and pre-populates option caches on startup."""
 
-        # __init__ runs before Orca's speech server exists, so restoring there can silently
-        # fail; by the time Orca is about to speak, the speech server is guaranteed to be up.
-        if not self._values_restored:
-            self._values_restored = True
-            self._restore_persisted_values()
-        return None
+        self._initialize_ring_state()
+
+    def on_enabled(self) -> None:
+        """Restores persisted ring values and pre-populates option caches when re-enabled.
+
+        Toggling any extension in the preferences page reloads every user extension from
+        scratch (see extension_loader.reload_user_extensions), so this instance never goes
+        through on_ready() - it needs the same one-time setup on_enabled() gives it instead.
+        """
+
+        self._initialize_ring_state()
+
+    def _initialize_ring_state(self) -> None:
+        self._restore_persisted_values()
+        for stop in self._STOPS:
+            if stop.kind == "list":
+                self._available_options(stop)
 
     def get_preferences(self) -> list[ExtensionPreference]:
         return [
@@ -203,7 +213,9 @@ class SynthSettingsRing(Extension):
     def _move_selection(self, direction: int) -> bool:
         stops = self._enabled_stops()
         if not stops:
-            self.controller.present_message_internal("No settings ring options are enabled.")
+            self.controller.present_message_internal(
+                "No settings ring options are enabled."
+            )
             return True
 
         index = self._index_of_current(stops)
@@ -218,7 +230,9 @@ class SynthSettingsRing(Extension):
 
     def _adjust_current_stop(self, direction: int) -> bool:
         if not self._enabled_stops():
-            self.controller.present_message_internal("No settings ring options are enabled.")
+            self.controller.present_message_internal(
+                "No settings ring options are enabled."
+            )
             return True
 
         stop = self._current_stop()
@@ -238,7 +252,9 @@ class SynthSettingsRing(Extension):
         elif direction > 0:
             self.controller.execute_command_internal(stop.module, stop.cycle_command)
         else:
-            self.controller.present_message_internal(f"{stop.label} cannot be moved backward.")
+            self.controller.present_message_internal(
+                f"{stop.label} cannot be moved backward."
+            )
             return True
 
         self._persist_current_value(stop)
@@ -246,7 +262,9 @@ class SynthSettingsRing(Extension):
 
     def _enabled_stops(self) -> list[_RingStop]:
         return [
-            stop for stop in self._STOPS if self.settings.get(f"enable-{stop.key}", default=True)
+            stop
+            for stop in self._STOPS
+            if self.settings.get(f"enable-{stop.key}", default=True)
         ]
 
     def _index_of_current(self, stops: list[_RingStop]) -> int:
@@ -278,7 +296,9 @@ class SynthSettingsRing(Extension):
     def _cycle_list_stop(self, stop: _RingStop, direction: int) -> None:
         available = self._available_options(stop)
         if not available:
-            self.controller.present_message_internal(f"No available options for {stop.label}.")
+            self.controller.present_message_internal(
+                f"No available options for {stop.label}."
+            )
             return
 
         # Orca's own backend can overwrite the "current value" it reports for this property
@@ -287,7 +307,9 @@ class SynthSettingsRing(Extension):
         # re-querying Orca, so cycling always advances regardless of what else has spoken.
         current = self._list_selection.get(stop.key)
         if current is None:
-            current = cast("str", self.controller.get_value_internal(stop.module, stop.property))
+            current = cast(
+                "str", self.controller.get_value_internal(stop.module, stop.property)
+            )
         try:
             index = available.index(current)
         except ValueError:
@@ -306,7 +328,9 @@ class SynthSettingsRing(Extension):
             raw_available = self.controller.get_value_internal(
                 stop.module, stop.available_property
             )
-            self._available_cache[stop.key] = cast("list[str]", raw_available) if raw_available else []
+            self._available_cache[stop.key] = (
+                cast("list[str]", raw_available) if raw_available else []
+            )
         return self._available_cache[stop.key]
 
     def _restore_persisted_values(self) -> None:
